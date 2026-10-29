@@ -1,6 +1,13 @@
+
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import { UserAccount } from '@/types/auth';
 import { EmployeeProfile } from '@/types/employee';
 import { storage } from './storage';
@@ -21,54 +28,45 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const CURRENT_USER_KEY = 'ecomfree_current_user_id';
 const LAST_ACTIVITY_KEY = 'ecomfree_last_activity';
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 mins per NFR-04
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [users, setUsers] = useState<UserAccount[]>(() => storage.getUsers());
-  const [employees, setEmployees] = useState<EmployeeProfile[]>(() => storage.getEmployees());
-
-  const getInitialUser = (): { user: UserAccount | null; emp: EmployeeProfile | null } => {
-    if (typeof window === 'undefined') {
-      const u = storage.getUsers()[0] || null;
-      const e = storage.getEmployees().find(emp => emp.employeeCode === u?.employeeCode) || null;
-      return { user: u, emp: e };
-    }
-
-    const loadedUsers = storage.getUsers();
-    const loadedEmployees = storage.getEmployees();
-    const savedUserId = localStorage.getItem(CURRENT_USER_KEY);
-    const active = loadedUsers.find(u => u.id === (savedUserId || 'u-hr-01')) || loadedUsers[0];
-
-    const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
-    if (lastActivity && Date.now() - parseInt(lastActivity, 10) > SESSION_TIMEOUT_MS) {
-      localStorage.removeItem(CURRENT_USER_KEY);
-      return { user: null, emp: null };
-    }
-
-    if (active && active.isActive) {
-      const emp = loadedEmployees.find(e => e.employeeCode === active.employeeCode) || null;
-      return { user: active, emp };
-    }
-
-    return { user: null, emp: null };
-  };
-
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => getInitialUser().user);
-  const [currentEmployee, setCurrentEmployee] = useState<EmployeeProfile | null>(() => getInitialUser().emp);
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [employees, setEmployees] = useState<EmployeeProfile[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [currentEmployee, setCurrentEmployee] = useState<EmployeeProfile | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const refreshData = useCallback(() => {
     const loadedUsers = storage.getUsers();
     const loadedEmployees = storage.getEmployees();
+
     setUsers(loadedUsers);
     setEmployees(loadedEmployees);
 
-    const savedUserId = typeof window !== 'undefined' ? localStorage.getItem(CURRENT_USER_KEY) : null;
-    const active = loadedUsers.find(u => u.id === (savedUserId || 'u-hr-01')) || loadedUsers[0];
+    const savedUserId = localStorage.getItem(CURRENT_USER_KEY);
+    const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
 
-    if (active && active.isActive) {
+    if (
+      lastActivity &&
+      Date.now() - Number(lastActivity) > SESSION_TIMEOUT_MS
+    ) {
+      localStorage.removeItem(CURRENT_USER_KEY);
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
+      setCurrentUser(null);
+      setCurrentEmployee(null);
+      return;
+    }
+
+    const active = savedUserId
+      ? loadedUsers.find((user) => user.id === savedUserId)
+      : null;
+
+    if (active?.isActive) {
       setCurrentUser(active);
-      const emp = loadedEmployees.find(e => e.employeeCode === active.employeeCode);
-      setCurrentEmployee(emp || null);
+      const employee =
+        loadedEmployees.find((item) => item.employeeCode === active.employeeCode) || null;
+      setCurrentEmployee(employee);
     } else {
       setCurrentUser(null);
       setCurrentEmployee(null);
@@ -76,6 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    refreshData();
+    setIsInitialized(true);
+  }, [refreshData]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
     const handleActivity = () => {
       localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
     };
@@ -87,13 +92,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('click', handleActivity);
       window.removeEventListener('keydown', handleActivity);
     };
-  }, []);
+  }, [isInitialized]);
 
-  const login = (username: string, pass: string): { success: boolean; error?: string } => {
+  const login = (username: string, pass: string) => {
     const allUsers = storage.getUsers();
     const cleanUsername = username.trim().toLowerCase();
+
     const found = allUsers.find(
-      u => u.username.toLowerCase() === cleanUsername || u.email.toLowerCase() === cleanUsername
+      (user) =>
+        user.username.toLowerCase() === cleanUsername ||
+        user.email.toLowerCase() === cleanUsername
     );
 
     if (!found) {
@@ -101,22 +109,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (!found.isActive) {
-      return { success: false, error: 'Tài khoản này đã bị khóa. Vui lòng liên hệ phòng Nhân sự (HR).' };
+      return {
+        success: false,
+        error: 'Tài khoản này đã bị khóa. Vui lòng liên hệ phòng Nhân sự (HR).',
+      };
     }
 
     if (pass.length < 6) {
-      return { success: false, error: 'Mật khẩu phải có độ dài tối thiểu 6 ký tự.' };
+      return {
+        success: false,
+        error: 'Mật khẩu phải có độ dài tối thiểu 6 ký tự.',
+      };
     }
 
     const updatedUser = { ...found, lastLoginAt: new Date().toISOString() };
-    const updatedUsers = allUsers.map(u => u.id === found.id ? updatedUser : u);
+    const updatedUsers = allUsers.map((user) =>
+      user.id === found.id ? updatedUser : user
+    );
+
     storage.saveUsers(updatedUsers);
     setUsers(updatedUsers);
     setCurrentUser(updatedUser);
 
-    const allEmps = storage.getEmployees();
-    const emp = allEmps.find(e => e.employeeCode === found.employeeCode);
-    setCurrentEmployee(emp || null);
+    const allEmployees = storage.getEmployees();
+    setEmployees(allEmployees);
+
+    const employee =
+      allEmployees.find((item) => item.employeeCode === found.employeeCode) || null;
+    setCurrentEmployee(employee);
 
     localStorage.setItem(CURRENT_USER_KEY, found.id);
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
@@ -148,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         details: 'Người dùng đã đăng xuất an toàn khỏi hệ thống',
       });
     }
+
     localStorage.removeItem(CURRENT_USER_KEY);
     localStorage.removeItem(LAST_ACTIVITY_KEY);
     setCurrentUser(null);
@@ -156,7 +177,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const switchUser = (userId: string) => {
     const allUsers = storage.getUsers();
-    const target = allUsers.find(u => u.id === userId);
+    const target = allUsers.find((user) => user.id === userId);
+
     if (!target) return;
 
     if (!target.isActive) {
@@ -165,9 +187,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     setCurrentUser(target);
-    const allEmps = storage.getEmployees();
-    const emp = allEmps.find(e => e.employeeCode === target.employeeCode);
-    setCurrentEmployee(emp || null);
+
+    const allEmployees = storage.getEmployees();
+    setEmployees(allEmployees);
+
+    const employee =
+      allEmployees.find((item) => item.employeeCode === target.employeeCode) || null;
+    setCurrentEmployee(employee);
+
     localStorage.setItem(CURRENT_USER_KEY, target.id);
     localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
 
@@ -183,19 +210,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const changePassword = (oldPass: string, newPass: string): { success: boolean; error?: string } => {
-    if (!currentUser) return { success: false, error: 'Chưa đăng nhập' };
+  const changePassword = (oldPass: string, newPass: string) => {
+    if (!currentUser) {
+      return { success: false, error: 'Chưa đăng nhập' };
+    }
 
     if (!oldPass || oldPass.length < 6) {
-      return { success: false, error: 'Vui lòng nhập mật khẩu hiện tại chính xác (tối thiểu 6 ký tự).' };
+      return {
+        success: false,
+        error: 'Vui lòng nhập mật khẩu hiện tại chính xác (tối thiểu 6 ký tự).',
+      };
     }
 
     if (!newPass || newPass.length < 6) {
-      return { success: false, error: 'Mật khẩu mới phải có ít nhất 6 ký tự.' };
+      return {
+        success: false,
+        error: 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+      };
     }
 
     if (oldPass === newPass) {
-      return { success: false, error: 'Mật khẩu mới không được trùng với mật khẩu cũ.' };
+      return {
+        success: false,
+        error: 'Mật khẩu mới không được trùng với mật khẩu cũ.',
+      };
     }
 
     storage.addAuditLog({
@@ -211,6 +249,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return { success: true };
   };
+
+  if (!isInitialized) {
+    return <div className="min-h-screen bg-slate-100" />;
+  }
 
   return (
     <AuthContext.Provider
@@ -233,8 +275,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
+
   return context;
 }

@@ -1,0 +1,45 @@
+/* ==========================================================================
+   ECOMFREE HRM - HỆ THỐNG BIẾN THIẾT KẾ DÙNG CHUNG (DESIGN TOKENS)
+   Tất cả các nhánh/thành viên có thể sử dụng các biến màu và thông số này
+   ========================================================================== */
+
+:root {
+  /* Bảng màu chính (Brand & Primary) */
+  --hrm-primary: #4f46e5;         /* Indigo 600 */
+  --hrm-primary-hover: #4338ca;   /* Indigo 700 */
+  --hrm-primary-light: #eef2ff;   /* Indigo 50 */
+  --hrm-primary-dark: #312e81;    /* Indigo 900 */
+
+  /* Bảng màu trạng thái (Status Colors) */
+  --hrm-success: #10b981;         /* Emerald 500 */
+  --hrm-success-light: #ecfdf5;   /* Emerald 50 */
+  --hrm-warning: #f59e0b;         /* Amber 500 */
+  --hrm-warning-light: #fffbeb;   /* Amber 50 */
+  --hrm-danger: #ef4444;          /* Rose 500 */
+  --hrm-danger-light: #fef2f2;    /* Rose 50 */
+  --hrm-info: #0284c7;            /* Sky 600 */
+  --hrm-info-light: #f0f9ff;      /* Sky 50 */
+
+  /* Màu nền & Bề mặt (Surfaces & Backgrounds) */
+  --hrm-bg-main: #f8fafc;         /* Slate 50 */
+  --hrm-bg-surface: #ffffff;      /* White */
+  --hrm-bg-subtle: #f1f5f9;       /* Slate 100 */
+
+  /* Màu chữ (Typography Colors) */
+  --hrm-text-title: #0f172a;      /* Slate 900 */
+  --hrm-text-body: #334155;       /* Slate 700 */
+  --hrm-text-muted: #64748b;      /* Slate 500 */
+  --hrm-text-subtle: #94a3b8;     /* Slate 400 */
+
+  /* Viền & Đổ bóng (Borders & Shadows) */
+  --hrm-border: #e2e8f0;          /* Slate 200 */
+  --hrm-border-focus: #818cf8;    /* Indigo 400 */
+  --hrm-radius-sm: 0.5rem;        /* 8px */
+  --hrm-radius-md: 0.75rem;       /* 12px */
+  --hrm-radius-lg: 1rem;          /* 16px */
+  --hrm-radius-xl: 1.25rem;       /* 20px */
+
+  --hrm-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+  --hrm-shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --hrm-shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
