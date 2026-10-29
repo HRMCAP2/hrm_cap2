@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -13,117 +14,217 @@ export function Sidebar() {
 
   const navItems = [
     {
-      title: 'Dashboard',
+      title: 'Tổng quan',
       href: '/',
       icon: Icons.Dashboard,
       description: 'Tổng quan theo vai trò',
       visible: true,
     },
     {
-      title: role === 'Employee' ? 'Hồ sơ cá nhân' : 'Hồ sơ nhân viên',
+      title: role === 'Employee' ? 'Hồ sơ cá nhân' : 'Nhân sự',
       href: '/employees',
       icon: Icons.Users,
       description:
         role === 'Employee'
-          ? 'Xem thông tin của tôi'
+          ? 'Thông tin cá nhân'
           : role === 'Lead'
-          ? 'Thành viên trong nhóm'
-          : 'Quản lý hồ sơ công ty',
+            ? 'Thành viên trong nhóm'
+            : 'Quản lý hồ sơ nhân viên',
       visible: true,
     },
     {
       title: 'Quản lý tài khoản',
       href: '/accounts',
       icon: Icons.Shield,
-      description: 'Cấp quyền & Khóa tài khoản',
-      // FR-02: Chỉ HR thấy chức năng này
+      description: 'Phân quyền và bảo mật',
       visible: role === 'HR',
     },
     {
-      title: 'Thông báo nghiệp vụ',
+      title: 'Thông báo',
       href: '/notifications',
       icon: Icons.Bell,
-      description: 'Nhận tin phê duyệt & hệ thống',
+      description: 'Tin nhắn và cập nhật',
       visible: true,
     },
     {
       title: 'Nhật ký hệ thống',
       href: '/audit-logs',
       icon: Icons.History,
-      description: 'Tra cứu truy vết thay đổi',
-      // FR-35: Chỉ HR xem nhật ký
+      description: 'Lịch sử hoạt động',
       visible: role === 'HR',
     },
   ];
 
+  const scopeLabel =
+    role === 'HR'
+      ? 'Toàn hệ thống'
+      : role === 'Lead'
+        ? `Nhóm ${currentUser?.department || 'Quản lý'}`
+        : role === 'Accountant'
+          ? 'Tài chính công ty'
+          : 'Dữ liệu cá nhân';
+
+  const roleLabel =
+    role === 'HR'
+      ? 'Nhân sự quản trị'
+      : role === 'Lead'
+        ? 'Trưởng nhóm'
+        : role === 'Accountant'
+          ? 'Kế toán'
+          : role === 'Employee'
+            ? 'Nhân viên'
+            : 'Đang tải tài khoản';
+
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 min-h-[calc(100vh-4rem)] border-r border-slate-800">
-      {/* Scope Info Pill */}
-      <div className="p-4 border-b border-slate-800 bg-slate-950/40">
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Phạm vi dữ liệu
-        </div>
-        <div className="mt-1 flex items-center justify-between">
-          <span className="text-xs font-medium text-slate-200">
-            {role === 'HR' && 'Toàn hệ thống (Admin)'}
-            {role === 'Lead' && `Nhóm ${currentUser?.department || 'Quản lý'}`}
-            {role === 'Accountant' && 'Toàn công ty (Tài chính)'}
-            {role === 'Employee' && 'Chỉ dữ liệu cá nhân'}
-          </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </div>
-        <p className="text-[10px] text-slate-400 mt-1">
-          {role === 'Lead' && '• Không xem dữ liệu lương'}
-          {role === 'Accountant' && '• Không sửa hồ sơ nhân sự'}
-          {role === 'Employee' && '• Chỉ xem hồ sơ & phiếu của mình'}
-          {role === 'HR' && '• Quản trị hồ sơ, tài khoản & nhật ký'}
-        </p>
+    <aside className="flex min-h-[calc(100vh-4rem)] w-64 shrink-0 flex-col border-r border-slate-200/80 bg-white text-slate-700">
+      {/* Brand */}
+      <div className="border-b border-slate-100 px-5 py-5">
+        <Link href="/" className="group flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 transition-transform group-hover:scale-105">
+            <Icons.Dashboard size={21} />
+          </div>
+
+          <div className="min-w-0">
+            <div className="text-[15px] font-extrabold tracking-tight text-slate-900">
+              Ecomfree
+              <span className="ml-1.5 font-medium text-indigo-600">HRM</span>
+            </div>
+            <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              People management
+            </div>
+          </div>
+        </Link>
       </div>
 
-      {/* Nav list */}
-      <nav className="p-3 space-y-1.5 flex-1">
-        {navItems
-          .filter((item) => item.visible)
-          .map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                    : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                }`}
-              >
-                <Icon size={20} className={`mt-0.5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                <div className="overflow-hidden">
-                  <div className="text-sm tracking-tight">{item.title}</div>
-                  <div className={`text-[11px] truncate ${isActive ? 'text-indigo-200' : 'text-slate-400'}`}>
-                    {item.description}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+      {/* Workspace */}
+      <div className="px-4 pt-5">
+        <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200/70">
+              <Icons.Shield size={16} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-bold text-slate-800">
+                {scopeLabel}
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                Phạm vi truy cập
+              </p>
+            </div>
+
+            <span
+              className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-50"
+              title="Phiên hoạt động"
+            />
+          </div>
+
+          <div className="mt-3 border-t border-slate-200/80 pt-3">
+            <span className="inline-flex items-center rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+              {roleLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-3 pb-5 pt-6">
+        <p className="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">
+          Không gian làm việc
+        </p>
+
+        <div className="space-y-1">
+          {navItems
+            .filter((item) => item.visible)
+            .map((item) => {
+              const isActive =
+                item.href === '/'
+                  ? pathname === '/'
+                  : pathname === item.href ||
+                    pathname.startsWith(`${item.href}/`);
+
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`group relative flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
+                    isActive
+                      ? 'bg-indigo-50 text-indigo-700'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  {isActive && (
+                    <span className="absolute bottom-2.5 left-0 top-2.5 w-[3px] rounded-r-full bg-indigo-600" />
+                  )}
+
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-all ${
+                      isActive
+                        ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-indigo-100'
+                        : 'text-slate-400 group-hover:bg-white group-hover:text-slate-700'
+                    }`}
+                  >
+                    <Icon size={19} />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-semibold leading-5">
+                      {item.title}
+                    </span>
+                    <span
+                      className={`mt-0.5 block truncate text-[11px] leading-4 ${
+                        isActive ? 'text-indigo-500' : 'text-slate-400'
+                      }`}
+                    >
+                      {item.description}
+                    </span>
+                  </span>
+
+                  {isActive && (
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-600" />
+                  )}
+                </Link>
+              );
+            })}
+        </div>
       </nav>
 
-      {/* System status footer */}
-      <div className="p-4 border-t border-slate-800 text-[11px] text-slate-400 space-y-1 bg-slate-950/20">
-        <div className="flex items-center justify-between">
-          <span>Phiên làm việc:</span>
-          <span className="text-slate-300 font-mono">30p (NFR-04)</span>
+      {/* Security information */}
+      <div className="px-4 pb-4">
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-emerald-600 shadow-sm">
+              <Icons.Lock size={14} />
+            </span>
+
+            <div>
+              <p className="text-xs font-bold text-emerald-800">
+                Bảo mật hệ thống
+              </p>
+              <p className="mt-0.5 text-[10px] text-emerald-700">
+                Phân quyền theo vai trò
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center justify-between">
-          <span>Bảo mật:</span>
-          <span className="text-emerald-400 font-medium flex items-center gap-1">
-            <Icons.Lock size={10} /> Chuẩn RBAC
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-slate-100 px-5 py-4">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-medium text-slate-400">
+            Ecomfree POD HRM
+          </span>
+          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+            v1.0
           </span>
         </div>
-        <div className="pt-2 text-[10px] text-slate-400 border-t border-slate-800/60">
-          Ecomfree POD HRM • Đà Nẵng
-        </div>
+        <p className="mt-1 text-[10px] text-slate-400">
+          Đà Nẵng, Việt Nam
+        </p>
       </div>
     </aside>
   );
